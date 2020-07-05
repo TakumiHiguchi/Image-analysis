@@ -6,7 +6,8 @@
 //入力ファイルの数
 #define FILECOUNT 2
 
-
+//ブロックマッチング法っブロック大きさ
+#define BLOCK 16
 
 void get_data(int fileNo);
 void rgb_to_ybr(int fileNo);
@@ -37,13 +38,12 @@ int main(void){
         ybr_to_rgb(i);//画像再変換
     }
     ex3(0);
-    for(int i=0; i<FILECOUNT; i++){
-        put_data(i);//書き出し
-    }
+
     return 0;
 }
 
 void ex3(fileNo){
+    FILE *fp;
     //ブロック内画素の差分絶対値和を用いて注目画像,参照画像を読み込み,注目画像中に設定した対象ブロックに対するマッチングブロックを求めるプログラムを作成
     
     if(fileNo == 0){
@@ -54,40 +54,21 @@ void ex3(fileNo){
         printf("垂直:");
         scanf("%d",&y);
         
-        int fix[3][16][16]={{{}}};
-        int block[width-15][height-15];
+        
+        int fix[3][BLOCK][BLOCK]={{{}}};
+        int block[width][height];
         //初期化
-        for(int i=0;i<height-16;i++){
-            for(int m=0;m<width-16;m++){
+        for(int i=0;i<height;i++){
+            for(int m=0;m<width;m++){
                 block[m][i] = 0;
             }
         }
-        int result[3]={};//0:x,1:y,2:差分絶対値和
-        //１枚目に赤枠をつける
-        for(int i=0;i<16;i++){
-            for(int m=0;m<16;m++){
-                for(int k=0;k<3;k++){
-                    fix[k][m][i]=imgin[fileNo][k][m+x][i+y];
-                }
-                if(m==0||m==15){
-                    imgout[fileNo][0][m+x][i+y]=82;
-                    imgout[fileNo][1][m+x][i+y]=90;
-                    imgout[fileNo][2][m+x][i+y]=240;
-                }else{
-                    if(i==0||i==15){
-                        imgout[fileNo][0][m+x][i+y]=82;
-                        imgout[fileNo][1][m+x][i+y]=90;
-                        imgout[fileNo][2][m+x][i+y]=240;
-                    }
-                }
-            }
-        }
         //ブロックマッチング法
-        for(int i=0;i<height-16;i++){
-            for(int m=0;m<width-16;m++){
+        for(int i=0;i<=(height-BLOCK);i++){
+            for(int m=0;m<=(width-BLOCK);m++){
                 int re=0;
-                for(int ix=0;ix<16;ix++){
-                    for(int my=0;my<16;my++){
+                for(int ix=0;ix<BLOCK;ix++){
+                    for(int my=0;my<BLOCK;my++){
                             re += abs(fix[0][my][ix] - imgout[fileNo+1][0][m+my][i+ix]);
                         
                     }
@@ -95,38 +76,25 @@ void ex3(fileNo){
                 block[m][i] = re;
             }
         }
-        for(int i=0;i<height-16;i++){
-            for(int m=0;m<width-16;m++){
-                if(i==0&&m==0){
-                    result[0] = m;
-                    result[1] = i;
-                    result[2] = block[m][i];
-                }else if(result[2] >= block[m][i]){
-                    result[0] = m;
-                    result[1] = i;
-                    result[2] = block[m][i];
-                }
-            }
+        
+        //ファイル書き出し
+        fp=fopen("ex2-7-result.txt","wb");
+        if (fp==NULL){
+            printf("ファイルをオープンできません.\n");
+            exit (1);
         }
-        printf("マッチング位置: (%d,%d)\nマッチング誤差: %d\n",result[0],result[1],result[2]);
-        x=result[0];
-        y=result[1];
-        //2枚目に赤枠をつける
-        for(int i=0;i<16;i++){
-            for(int m=0;m<16;m++){
-                if(m==0||m==15){
-                    imgout[fileNo+1][0][m+x][i+y]=82;
-                    imgout[fileNo+1][1][m+x][i+y]=90;
-                    imgout[fileNo+1][2][m+x][i+y]=240;
-                }else{
-                    if(i==0||i==15){
-                        imgout[fileNo+1][0][m+x][i+y]=82;
-                        imgout[fileNo+1][1][m+x][i+y]=90;
-                        imgout[fileNo+1][2][m+x][i+y]=240;
-                    }
-                }
+        printf("ファイルをオープンしました.\n");
+        /*--- ファイルに書き出し ---*/
+        for(int i=0;i<BLOCK;i++){
+            for(int m=0;m<BLOCK;m++){
+                fprintf(fp,"%d ",block[m][i]);
             }
+            fprintf(fp,"\n");
         }
+        printf("ファイルにデータを書き出しました.\n");
+        /*--- ファイル・クローズ(書き出し用) ---*/
+        fclose(fp);
+        printf("ファイルをクローズしました.\n");
     }
 }
 
