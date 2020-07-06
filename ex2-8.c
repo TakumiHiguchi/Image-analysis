@@ -4,9 +4,10 @@
 #define MAX 100
 
 //入力ファイルの数
-#define FILECOUNT 2
+#define FILECOUNT 1
 
-
+//ブロックマッチング法っブロック大きさ
+#define BLOCK 16
 
 void get_data(int fileNo);
 void rgb_to_ybr(int fileNo);
@@ -27,9 +28,7 @@ int maxFrequency=0;//度数の最大値
 int minFrequency=0;//度数の最小値
 int maxFrequencykey=0;//最大値の添字
 
-int height[FILECOUNT] = {};
-int width[FILECOUNT] = {};
-int g;
+int height,width,g;
 
 int main(void){
     for(int i=0; i<FILECOUNT; i++){
@@ -37,108 +36,32 @@ int main(void){
         rgb_to_ybr(i);//rgbをycbcrに変換
         processing(i);//排出
         ybr_to_rgb(i);//画像再変換
-        
     }
+    
     ex3(0);
     for(int i=0; i<FILECOUNT; i++){
         put_data(i);//書き出し
     }
+
     return 0;
 }
 
 void ex3(fileNo){
     //ブロック内画素の差分絶対値和を用いて注目画像,参照画像を読み込み,注目画像中に設定した対象ブロックに対するマッチングブロックを求めるプログラムを作成
     
-    if(fileNo == 0){
-        int x=0;
-        int y=0;
-        printf("水平:");
-        scanf("%d",&x);
-        printf("垂直:");
-        scanf("%d",&y);
-        
-        int fix[3][16][16]={{{}}};
-        int block[width[fileNo]-15][height[fileNo]-15];
-        //初期化
-        for(int i=0;i<height[fileNo]-16;i++){
-            for(int m=0;m<width[fileNo]-16;m++){
-                block[m][i] = 0;
-            }
-        }
-        int result[3]={};//0:x,1:y,2:差分絶対値和
-        //１枚目に赤枠をつける
-        for(int i=0;i<16;i++){
-            for(int m=0;m<16;m++){
-                for(int k=0;k<3;k++){
-                    fix[k][m][i]=imgin[fileNo][k][m+x][i+y];
-                }
-                if(m==0||m==15){
-                    imgout[fileNo][0][m+x][i+y]=255;
-                    imgout[fileNo][1][m+x][i+y]=0;
-                    imgout[fileNo][2][m+x][i+y]=0;
-                }else{
-                    if(i==0||i==15){
-                        imgout[fileNo][0][m+x][i+y]=255;
-                        imgout[fileNo][1][m+x][i+y]=0;
-                        imgout[fileNo][2][m+x][i+y]=0;
-                    }
-                }
-            }
-        }
-        
-        
-        //ブロックマッチング法
-        for(int i=0;i<=height[fileNo]-16;i++){
-            for(int m=0;m<=width[fileNo]-16;m++){
-                int re=0;
-                for(int ix=0;ix<16;ix++){
-                    for(int my=0;my<16;my++){
-                            re += abs(fix[0][my][ix] - imgout[fileNo+1][0][m+my][i+ix]);
-                        
-                    }
-                }
-                block[m][i] = re;
-            }
-        }
-        for(int i=0;i<(height[fileNo]-16);i++){
-            for(int m=0;m<(width[fileNo]-16);m++){
-                if(i==0&&m==0){
-                    result[0] = m;
-                    result[1] = i;
-                    result[2] = block[m][i];
-                }else if(result[2] >= block[m][i]){
-                    result[0] = m;
-                    result[1] = i;
-                    result[2] = block[m][i];
-                }
-            }
-        }
-        printf("マッチング位置: (%d,%d)\nマッチング誤差: %d\n",result[0],result[1],result[2]);
-        x=result[0];
-        y=result[1];
-        //2枚目に赤枠をつける
-        for(int i=0;i<16;i++){
-            for(int m=0;m<16;m++){
-                if(m==0||m==15){
-                    imgout[fileNo+1][0][m+x][i+y]=255;
-                    imgout[fileNo+1][1][m+x][i+y]=0;
-                    imgout[fileNo+1][2][m+x][i+y]=0;
-                }else{
-                    if(i==0||i==15){
-                        imgout[fileNo+1][0][m+x][i+y]=255;
-                        imgout[fileNo+1][1][m+x][i+y]=0;
-                        imgout[fileNo+1][2][m+x][i+y]=0;
-                    }
-                }
-            }
+    for(int i=0;i<32;i++){
+        for(int m=0;m<32;m++){
+            imgout[fileNo][0][m][i] = 255;
+            imgout[fileNo][1][m][i] = 255;
+            imgout[fileNo][2][m][i] = 0;
         }
     }
+
 }
 
 
 void processing(fileNo){
     copy(fileNo);
-    
     printf("\n入力画像データをコピーして出力画像データを作成しました。\n");
 }
 
@@ -146,16 +69,16 @@ void rgb_to_ybr(fileNo){
     /*
      for(int k=0;k<3;k++){
      if(k==0){printf("--- R ---\n");}else if(k==1){printf("--- G ---\n");}else if(k==2){printf("--- B ---\n");}
-     for(int i=0;i<height[fileNo];i++){
-     for(int m=0;m<width[fileNo];m++){
+     for(int i=0;i<height;i++){
+     for(int m=0;m<width;m++){
      printf("%.2X ",imgin[k][m][i]);
      }
      printf("\n");
      }
      }
      */
-    for(int i=0;i<height[fileNo];i++){
-        for(int m=0;m<width[fileNo];m++){
+    for(int i=0;i<height;i++){
+        for(int m=0;m<width;m++){
             int p[3]={0,0,0};
             p[0]=rounds(0.2990*imgin[fileNo][0][m][i]+0.5870*imgin[fileNo][1][m][i]+0.1140*imgin[fileNo][2][m][i]);
             p[1]=rounds(0.1687*(-1)*imgin[fileNo][0][m][i]+0.3313*(-1)*imgin[fileNo][1][m][i]+0.5*imgin[fileNo][2][m][i])+128;
@@ -177,8 +100,8 @@ void rgb_to_ybr(fileNo){
     /*
      for(int k=0;k<3;k++){
      if(k==0){printf("--- Y ---\n");}else if(k==1){printf("--- Cb ---\n");}else if(k==2){printf("--- Cr ---\n");}
-     for(int i=0;i<height[fileNo];i++){
-     for(int m=0;m<width[fileNo];m++){
+     for(int i=0;i<height;i++){
+     for(int m=0;m<width;m++){
      printf("%.2X ",imgin[k][m][i]);
      }
      printf("\n");
@@ -189,8 +112,8 @@ void rgb_to_ybr(fileNo){
 
 void copy(fileNo){
     for(int k=0;k<3;k++){
-        for(int i=0;i<height[fileNo];i++){
-            for(int m=0;m<width[fileNo];m++){
+        for(int i=0;i<height;i++){
+            for(int m=0;m<width;m++){
                 imgout[fileNo][k][m][i]=imgin[fileNo][k][m][i];
             }
         }
@@ -202,8 +125,8 @@ void ybr_to_rgb(fileNo){
      printf("<出力信号(YCbCr)>\n");
      for(int k=0;k<3;k++){
      if(k==0){printf("--- Y ---\n");}else if(k==1){printf("--- Cb ---\n");}else if(k==2){printf("--- Cr ---\n");}
-     for(int i=0;i<height[fileNo];i++){
-     for(int m=0;m<width[fileNo];m++){
+     for(int i=0;i<height;i++){
+     for(int m=0;m<width;m++){
      printf("%.2X ",imgout[k][m][i]);
      }
      printf("\n");
@@ -212,8 +135,8 @@ void ybr_to_rgb(fileNo){
      
      printf("<出力信号(RGB)>\n");
      */
-    for(int i=0;i<height[fileNo];i++){
-        for(int m=0;m<width[fileNo];m++){
+    for(int i=0;i<height;i++){
+        for(int m=0;m<width;m++){
             int p[3]={0,0,0};
             p[0]=rounds(imgout[fileNo][0][m][i]+1.402*(imgout[fileNo][2][m][i]-128));
             p[1]=rounds(imgout[fileNo][0][m][i]+(-1)*0.3441*(imgout[fileNo][1][m][i]-128)+(-1)*0.7141*(imgout[fileNo][2][m][i]-128));
@@ -235,8 +158,8 @@ void ybr_to_rgb(fileNo){
     /*
      for(int k=0;k<3;k++){
      if(k==0){printf("--- R ---\n");}else if(k==1){printf("--- G ---\n");}else if(k==2){printf("--- B ---\n");}
-     for(int i=0;i<height[fileNo];i++){
-     for(int m=0;m<width[fileNo];m++){
+     for(int i=0;i<height;i++){
+     for(int m=0;m<width;m++){
      printf("%.2X ",imgout[k][m][i]);
      }
      printf("\n");
@@ -318,18 +241,18 @@ void get_data(fileNo){
         printf("%dバイト\n",cfBite%4);
         printf("ファイルをクローズしました\n");
     }
-    height[fileNo]=header[fileNo][22]+header[fileNo][23]*0x100+header[fileNo][24]*0x10000+header[fileNo][25]*0x100000;
-    width[fileNo]=header[fileNo][18]+header[fileNo][19]*0x100+header[fileNo][20]*0x10000+header[fileNo][21]*0x100000;
-    for(int a=height[fileNo]-1;a>=0;a--){
-        for(int b=0;b<width[fileNo];b++){
+    height=header[fileNo][22]+header[fileNo][23]*0x100+header[fileNo][24]*0x10000+header[fileNo][25]*0x100000;
+    width=header[fileNo][18]+header[fileNo][19]*0x100+header[fileNo][20]*0x10000+header[fileNo][21]*0x100000;
+    for(int a=height-1;a>=0;a--){
+        for(int b=0;b<width;b++){
             for(int f=2;f>-1;f--){
                 imgin[fileNo][f][b][a]=g;
                 g=fgetc(fp);
             }
         }
     }
-    for(int a=height[fileNo]-1;a>=0;a--){
-        for(int b=0;b<width[fileNo];b++){
+    for(int a=height-1;a>=0;a--){
+        for(int b=0;b<width;b++){
             for(int g=0;g<3;g++){
                 imgout[fileNo][g][b][a]=imgin[fileNo][g][b][a];
             }
@@ -351,8 +274,8 @@ void put_data(fileNo){
     for(int i=0;i<54;i++){
         fputc(header[fileNo][i],fp);
     }
-    for(int i=height[fileNo]-1;i>=0;i--){
-        for(int j=0;j<width[fileNo];j++){
+    for(int i=height-1;i>=0;i--){
+        for(int j=0;j<width;j++){
             for(int k=2;k>=0;k--){
                 fputc(imgout[fileNo][k][j][i],fp );
             }

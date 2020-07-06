@@ -76,32 +76,13 @@ void ex3(fileNo){
                 block[m][i] = re;
             }
         }
-        
-        //ファイル書き出し
-        fp=fopen("ex2-7-result.txt","wb");
-        if (fp==NULL){
-            printf("ファイルをオープンできません.\n");
-            exit (1);
-        }
-        printf("ファイルをオープンしました.\n");
-        /*--- ファイルに書き出し ---*/
-        for(int i=0;i<BLOCK;i++){
-            for(int m=0;m<BLOCK;m++){
-                fprintf(fp,"%d ",block[m][i]);
-            }
-            fprintf(fp,"\n");
-        }
-        printf("ファイルにデータを書き出しました.\n");
-        /*--- ファイル・クローズ(書き出し用) ---*/
-        fclose(fp);
-        printf("ファイルをクローズしました.\n");
+
     }
 }
 
 
 void processing(fileNo){
     copy(fileNo);
-    printf("\n入力画像データをコピーして出力画像データを作成しました。\n");
 }
 
 void rgb_to_ybr(fileNo){
